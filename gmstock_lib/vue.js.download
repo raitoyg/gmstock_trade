@@ -1,0 +1,1058 @@
+var vueData = {
+    isLogin: false,
+    user: {},
+};
+
+var vueNav = new Vue({
+    el: "#vue-nav",
+    data: vueData,
+    methods: {
+        openModalLogin: function () {
+            $("#modalLogin").modal("toggle");
+            modalLogin.user.email = "";
+            modalLogin.user.password = "";
+            modalLogin.isClose = false;
+        },
+        logout: function () {
+            localStorage.removeItem("auth");
+            // $.removeCookie('auth',  {path: '/', domain: '.keetoolclient.test'});
+            // $.removeCookie('auth',  {path: '/', domain: '.colorme.vn'});
+
+        },
+    },
+});
+
+var modalLogin = new Vue({
+    el: "#modalLogin",
+    data: {
+        user: {
+            email: "",
+            password: "",
+        },
+        isLoading: false,
+        hasError: false,
+        isClose: false,
+        modalLogin: true,
+        showRegisterForm: true,
+        message: ""
+    },
+    methods: {
+        login: function () {
+            var url = "/login-social";
+            this.isLoading = true;
+            this.hasError = false;
+            this.isClose = true;
+            axios
+                .post(url, this.user)
+                .then(
+                    function (res) {
+                        this.isLoading = false;
+                        this.isClose = false;
+                        if (res.data.user) {
+                            $("#modalLogin").modal("toggle");
+                            vueData.isLogin = true;
+                            vueData.user = res.data.user;
+                            localStorage.setItem(
+                                "auth",
+                                JSON.stringify(res.data)
+                            );
+                            if (window.location.pathname == "/login-elearning") {
+                                var data = res.data.user;
+
+                                var url_string = window.location.href
+                                var url = new URL(url_string);
+                                var redirectTo = url.searchParams.get("redirectTo") ? url.searchParams.get("redirectTo") : "/";
+
+                                window.location.href = "http://e." + domain + "/login-colorme?status=1&data=" +
+                                    JSON.stringify({
+                                        name: data.name,
+                                        email: data.email,
+                                        phone: data.phone,
+                                        avatar_url: data.avatar_url,
+                                        gender: data.gender,
+                                        username: data.username,
+                                        role: data.role,
+                                    }) +
+                                    "&redirectTo=" + redirectTo;
+
+                            } else location.reload();
+
+                        } else {
+                            this.hasError = true;
+                            toastr.error(res.data.error);
+                        }
+                    }.bind(this)
+                )
+                .catch(
+                    function (error) {
+                        this.isLoading = false;
+                        this.hasError = true;
+                        toastr.error(error.response.data.error);
+                    }.bind(this)
+                );
+        },
+        changeModal: function () {
+            this.showRegisterForm = true;
+            this.message = "";
+            this.modalLogin = !this.modalLogin;
+        },
+        register: function () {
+            $("#form-register form").validate({
+                rules: {
+                    email: "required",
+                    name: "required",
+                    phone: {
+                        required: {
+                            depends: function () {
+                                $(this).val($.trim($(this).val()));
+                                return true;
+                            }
+                        },
+                        minlength: 6
+                    },
+                    password: "required",
+                    confirm_password: {
+                        required: true,
+                        equalTo: "#password",
+                    },
+                },
+                messages: {
+                    email: {
+                        required: "Vui lòng nhập email",
+                        email: "Vui lòng nhập đúng email",
+                    },
+                    password: {
+                        required: "Vui lòng nhập mật khẩu",
+                    },
+                    confirm_password: {
+                        required: "Vui lòng xác nhận mật khẩu",
+                        equalTo: "Mật khẩu không trùng",
+                    },
+                    name: "Vui lòng nhập họ và tên",
+                    phone: "Vui lòng nhập số điện thoại",
+                },
+            });
+            if ($("#form-register form").valid()) {
+                var url = "/register-confirm-email";
+                this.isLoading = true;
+                this.hasError = false;
+                this.isClose = true;
+                axios
+                    .post(url, this.user)
+                    .then(
+                        function (res) {
+                            this.isLoading = false;
+                            this.isClose = false;
+                            this.message = "";
+
+                            if (Number(res.data.status) === 1) {
+                                this.message = res.data.message;
+                                this.showRegisterForm = false;
+                                this.user = {
+                                    email: "",
+                                    password: "",
+                                };
+                            } else {
+                                this.hasError = true;
+                                toastr.error(res.data.error);
+                            }
+                            // if (res.data.user) {
+                            //     $("#modalLogin").modal("toggle");
+                            //     vueData.isLogin = true;
+                            //     vueData.user = res.data.user;
+                            //     localStorage.setItem(
+                            //         "auth",
+                            //         JSON.stringify(res.data),
+                            //     );
+                            //     location.reload();
+                            // } else {
+                            //     this.hasError = true;
+                            //     toastr.error(res.data.error);
+                            // }
+                        }.bind(this)
+                    )
+                    .catch(
+                        function (error) {
+                            this.isLoading = false;
+                            this.hasError = true;
+                            toastr.error(error.response.data.error);
+                        }.bind(this)
+                    );
+            }
+        },
+    },
+});
+
+var modalCreateJob = new Vue({
+    el: '#modal-create-job',
+    data: {
+        token: false,
+        isLoading: false,
+        isUploadingImage: false,
+        isSaving: false,
+        percent: false,
+        formJob: {
+            image_url: '',
+            thumbnail_url: '',
+            title: '',
+            deadline: new Date(new Date().getTime() + 24 * 60 * 60 * 1000 * 7).toISOString().slice(0, 16),
+            content: '',
+            tags: '',
+            working_method: '',
+            scope: '',
+            experience_requirement: '',
+            payment_method: '',
+            budget_from: '',
+            budget_to: '',
+            labels: [],
+            categories: [],
+            skills: [],
+            location_id: null,
+        },
+        info: {
+            experience_requirements: [],
+            job_scopes: [],
+            payment_methods: [],
+            working_methods: [],
+            categories: [],
+            skills: [],
+            locations: [],
+            editor: null,
+        },
+    },
+    methods: {
+        changeAvatar: function (e) {
+            var input = document.createElement("input");
+            input.type = "file";
+            input.value = "";
+            input.accept = ".jpg,.png";
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file.size > 5 * 1000 * 1000) {
+                    alert("Kích thước ảnh không được quá 5 Mb");
+                    return 0
+                }
+                this.percent = 0;
+                this.isUploadingImage = true;
+                // const url = "https://colorme.vn/api/v3/file/auth/image/upload";
+                var url = "/api/v3/file/auth/image/upload";
+
+                let formdata = new FormData();
+                formdata.append("image", file);
+                let ajax = new XMLHttpRequest();
+                ajax.addEventListener("load", this.uploadAvatarSuccess, false);
+                ajax.upload.addEventListener("progress", this.progressHandler, false);
+                ajax.open("POST", url);
+                ajax.send(formdata);
+
+
+                new Compressor(file, {
+                    quality: 0.8,
+                    maxWidth: 400,
+                    // The compression process is asynchronous,
+                    // which means you have to access the `result` in the `success` hook function.
+                    success: (result) => {
+                        const formData = new FormData();
+
+                        // The third parameter is required for server
+                        formData.append('image', result, result.name);
+
+                        console.log(url);
+                        // Send the compressed image file to server with XMLHttpRequest.
+                        axios.post(url, formData).then((response) => {
+                            console.log('Upload thumbnail success');
+                            console.log(response.data);
+                            var thumbnail_result = response.data
+                            console.log(thumbnail_result.link);
+                            this.formJob.thumbnail_url = thumbnail_result.link;
+                        });
+
+                    },
+                    error(err) {
+                        console.log(err.message);
+                    },
+                });
+            }
+            input.click();
+
+        },
+        progressHandler(event) {
+            let percent = (event.loaded / event.total) * 100;
+            this.percent = Math.round(percent);
+        },
+        onChangeFormJob: function (field, value) {
+            this.formJob[field] = value;
+        },
+        onChangeSelectFormJob: function (field, id) {
+            if (this.formJob[field].indexOf(id) < 0) {
+                this.formJob[field].push(id);
+            } else {
+                this.formJob[field] = this.formJob[field].filter(i => i != id);
+            }
+        },
+        uploadAvatarSuccess: function (e) {
+
+            this.isUploadingImage = false;
+            this.isLoading = false;
+
+            toastr.success("Tải ảnh lên thành công");
+            this.formJob.image_url = JSON.parse(e.currentTarget.response).link;
+
+        },
+        validateForm: function () {
+            let errors = [];
+            let {
+                image_url,
+                thumbnail_url,
+                title,
+                deadline,
+                content,
+                tags,
+                working_method,
+                scope,
+                experience_requirement,
+                payment_method,
+                budget_from,
+                budget_to,
+                labels,
+                categories,
+                skills,
+                location_id,
+            } = this.formJob;
+            console.log('deadline', deadline);
+            if (!(image_url && image_url.length > 0)) {
+                errors.push('Bạn chưa chọn ảnh đại diện');
+            }
+            if (!(title && title.length > 0)) {
+                errors.push('Bạn chưa nhập tiêu đề');
+            }
+            if (!deadline) {
+                errors.push('Bạn chưa chọn hạn chót');
+            }
+            if (!(content && content.length > 0)) {
+                errors.push('Bạn chưa nhập mô tả chi tiết');
+            }
+            if (!(tags && tags.length > 0)) {
+                errors.push('Hãy nhập ít nhất 1 tag');
+            }
+            if (!(working_method && working_method.length > 0)) {
+                errors.push('Bạn chưa chọn hình thức làm việc');
+            }
+            if (!(budget_from > 0 || budget_to > 0) || budget_to < budget_from) {
+                errors.push('Mức lương không hợp lệ');
+            }
+            if (!(categories && categories.length > 0)) {
+                errors.push('Bạn chưa chọn lĩnh vực nào');
+            }
+            if (!(skills && skills.length > 0)) {
+                errors.push('Bạn chưa chọn kĩ năng nào');
+            }
+            if (!location_id) {
+                errors.push('Bạn chưa chọn địa điểm');
+            }
+            errors.forEach(e => toastr.error(e));
+            return errors.length == 0;
+        },
+        submitJob: function () {
+            this.formJob.content = this.editor.html.get();
+            console.log(this.formJob);
+            if (!this.validateForm()) return;
+            this.isLoading = true;
+            toastr.warning("Đang lưu...");
+            var url = '/api/v3/jobs/store';
+            if (this.token) {
+                url += "?token=" + this.token;
+            }
+            $.post(
+                url,
+                {
+                    ...this.formJob,
+                },
+                function (data, status) {
+                    console.log(data, status);
+                    $('#modal-create-job').modal('hide');
+                    toastr.success("Lưu thành công");
+                    this.isLoading = false;
+                    this.formJob = {};
+                    window.location.reload();
+                }
+            );
+        },
+        toggleEditJob: function (e) {
+            console.log('toggleEditJob', e)
+            this.formJob = {
+                id: e.id,
+                image_url: e.image_url,
+                thumbnail_url: e.thumbnail_url,
+                title: e.title,
+                deadline: new Date(e.deadline_raw).toISOString().slice(0, 16),
+                content: e.content,
+                tags: e.tags,
+                working_method: e.workingMethod.id,
+                scope: e.jobScope.id,
+                experience_requirement: e.experienceRequirement.id,
+                payment_method: e.paymentMethod.id,
+                budget_from: e.budget_from,
+                budget_to: e.budget_to,
+                labels: e.labels,
+                categories: e.categories.map(i => i.id),
+                skills: e.skills.map(i => i.id),
+                location_id: e.location_id,
+            };
+            this.editor.html.set(e.content);
+            this.isLoading = false;
+            $(`#${this.$el.id}`).modal('toggle');
+        },
+        setEditorContent: function (content) {
+            if (!this.editor) return;
+            var parser = new DOMParser;
+            var dom = parser.parseFromString(
+                '<!doctype html><body>' + (content || ''),
+                'text/html');
+            var decodedString = dom.body.textContent;
+            this.editor.html.set(decodedString);
+        }
+    },
+    mounted: function () {
+        this.editor = new FroalaEditor('#editorjob', {
+            imageUploadParam: 'image',
+            attribution: false,
+            key: 'SDB17hC8D6D6F4C3F3gB-22pmkobiH3rkzA3B2A1A1F4E1B1A10A1C6==',
+            imageUploadURL: "/api/v3/file/auth/image/upload",
+            fontSize: false,
+            fontFamily: false,
+            imageDefaultWidth: 'unset'
+            // editorClass: 'product-content'
+        }, this.setEditorContent(this.formJob.content));
+
+        let authStr = localStorage.getItem('auth');
+        if (authStr) {
+            this.token = JSON.parse(authStr).token;
+        }
+        var url = "/api/v3/jobs/info-create";
+        if (this.token) {
+            url += "?token=" + this.token;
+        }
+        this.isLoading = true;
+        axios.get(url)
+            .then(res => {
+                    this.info = res.data;
+                    //
+                    // var parser = new DOMParser;
+                    // var dom = parser.parseFromString(
+                    //     '<!doctype html><body>' + this.info.content,
+                    //     'text/html');
+                    // var decodedString = dom.body.textContent;
+
+                    // this.editor.html.set(decodedString);
+
+                    this.isLoading = false;
+                    console.log(this.info);
+                    this.formJob = {
+                        ...this.formJob,
+                        experience_requirement: this.info.experience_requirements[0].id,
+                        scope: this.info.job_scopes[0].id,
+                        payment_method: this.info.payment_methods[0].id,
+                        working_method: this.info.working_methods[0].id,
+                        location_id: this.info.locations[0].id,
+                    };
+
+                }
+            );
+
+
+        setTimeout(function () {
+            $("#input-job-avatar").on("change", function () {
+                var fileName = $(this).val().split("\\").pop();
+                $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+            });
+
+
+        }, 100);
+
+    },
+    computed: {
+        tagsArray: function () {
+            return (this.formJob.tags || '').split(',');
+        },
+        currentProvince: function () {
+            return this.info.locations.filter(i => i.id == this.formJob.location_id)[0];
+        },
+
+    },
+    watch: {
+        formJob: {
+            deep: true,
+            handler: function (val) {
+                console.log(val)
+
+            }
+        },
+    }
+
+});
+const vues = document.querySelectorAll(".submit-product");
+Array.prototype.forEach.call(vues, (el, index) => new Vue({
+    el,
+    data: {},
+    methods: {
+        onChangeTopic: function (topic,group) {
+            console.log('huray');
+            console.log(group);
+            modalCreateProduct.onChangeFormProduct('topic',topic);
+            modalCreateProduct.onChangeGroup(group);
+        }
+    },
+}));
+
+
+var modalCreateProduct = new Vue({
+    el: '#modal-create-product',
+    data: {
+        token: false,
+        isLoading: false,
+        isUploadingImage: false,
+        isSaving: false,
+        percent: 0,
+        topics:[],
+        topic: null,
+        group: null,
+        formProduct: {
+            image_url: '',
+            thumb_url: '',
+            title: '',
+            content: '',
+            tags: '',
+            topicId: '',
+        },
+        info: {
+            editor: null,
+        },
+    },
+    methods: {
+       
+        changeAvatar: function (e) {
+            var imageTypes=["image/jpeg", "image/png"];
+            var input = document.createElement("input");
+            input.type = "file";
+            input.value = "";
+            input.accept = ".jpg,.png,.mp4,.mov,.avi";
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if ($.inArray(file.type, imageTypes) >= 0) {
+                    if (file.size > 5 * 1000 * 1000) {
+                        alert("Kích thước ảnh không được quá 5 Mb");
+                        return 0
+                    }
+                    this.percent = 0;
+                    this.isUploadingImage = true;
+                    var url = "/api/v3/file/auth/image/upload";
+    
+                    let formdata = new FormData();
+                    formdata.append("image", file);
+                    let ajax = new XMLHttpRequest();
+                    ajax.addEventListener("load", this.uploadAvatarSuccess, false);
+                    ajax.upload.addEventListener("progress", this.progressHandler, false);
+                    ajax.open("POST", url);
+                    ajax.send(formdata);
+    
+    
+                    new Compressor(file, {
+                        quality: 0.8,
+                        maxWidth: 400,
+                        // The compression process is asynchronous,
+                        // which means you have to access the `result` in the `success` hook function.
+                        success: (result) => {
+                            const formData = new FormData();
+    
+                            // The third parameter is required for server
+                            formData.append('image', result, result.name);
+    
+                            console.log(url);
+                            // Send the compressed image file to server with XMLHttpRequest.
+                            axios.post(url, formData).then((response) => {
+                                console.log('Upload thumbnail success');
+                                console.log(response.data);
+                                var thumb_result = response.data
+                                console.log(thumb_result.link);
+                                this.formProduct.thumb_url = thumb_result.link;
+                            });
+    
+                        },
+                        error(err) {
+                            console.log(err.message);
+                        },
+                    });
+                }
+                else{
+                    if (file.size > 200 * 1080 * 1080) {
+                        alert("Video không được quá 200 Mb");
+                        return 0
+                    }
+                    this.percent = 0;
+                    this.isUploadingImage = true;
+                    var url = "https://colorme.vn/node-server/video/upload";
+                    if (this.token) {
+                        url += "?token=" + this.token;
+                    }
+                    let formData = new FormData();
+                    formData.append("video", file, file.name);
+                    formData.append("file_name", file.name);
+
+                    let ajax = new XMLHttpRequest();
+                    ajax.addEventListener("load", this.uploadAvatarSuccess, false);
+                    ajax.upload.addEventListener("progress", this.progressHandler, false);
+                    ajax.open("POST", url);
+                    ajax.send(formData);
+                }
+            }
+            input.click();
+
+        },
+        progressHandler(event) {
+            let percent = (event.loaded / event.total) * 100;
+            this.percent = Math.round(percent);
+        },
+        onChangeFormProduct: function (field, value) {
+            console.log('hello');
+            switch (field){
+                case 'topic':
+                    this.topic = value;
+                    this.formProduct.topicId = value.id;
+                    break;
+                default:
+                    this.formProduct[field] = value;
+
+            }
+
+        },
+        onChangeSelectFormProduct: function (field, id) {
+            if (this.formProduct[field].indexOf(id) < 0) {
+                this.formProduct[field].push(id);
+            } else {
+                this.formProduct[field] = this.formProduct[field].filter(i => i != id);
+            }
+        },
+        uploadAvatarSuccess: function (e) {
+
+            this.isUploadingImage = false;
+            this.isLoading = false;
+
+            
+            if (JSON.parse(e.currentTarget.response).link){
+                toastr.success("Tải ảnh lên thành công");
+                this.formProduct.image_url = JSON.parse(e.currentTarget.response).link;
+            }
+            else{
+                toastr.success("Tải video lên thành công");
+                this.formProduct.image_url = JSON.parse(e.currentTarget.response).uri;
+                console.log('nice');
+            }
+            
+            
+        },
+        validateForm: function () {
+            let errors = [];
+            let {
+                image_url,
+                thumb_url,
+                title,
+                content,
+                tags,
+                topicId,
+            } = this.formProduct;
+            if (!(image_url && image_url.length > 0)) {
+                errors.push('Bạn chưa chọn ảnh đại diện');
+            }
+            if (!(title && title.length > 0)) {
+                errors.push('Bạn chưa nhập tiêu đề');
+            }
+            // if (!(content && content.length > 0)) {
+            //     errors.push('Bạn chưa nhập mô tả chi tiết');
+            // }
+            // if (!(tags && tags.length > 0)) {
+            //     errors.push('Hãy nhập ít nhất 1 tag');
+            // }
+            errors.forEach(e => toastr.error(e));
+            return errors.length == 0;
+        },
+        submitProduct: function () {
+            this.formProduct.content = this.editor.html.get();
+            console.log(this.formProduct);
+            if (!this.validateForm()) return;
+            this.isLoading = true;
+            toastr.warning("Đang lưu...");
+            var url = '/api/v3/save-product';
+            if (this.token) {
+                url += "?token=" + this.token;
+            }
+            $.post(
+                url,
+                {
+                    ...this.formProduct,
+                    tags_string : this.formProduct.tags,
+                    product_content: this.formProduct.content,
+                    topicId: this.formProduct.topicId,
+                },
+                function (data, status) {
+                    console.log(data, status);
+                    $('#modal-create-product').modal('hide');
+                    toastr.success("Lưu thành công");
+                    this.isLoading = false;
+                    this.formProduct = {};
+                    window.location.href = '/profile';
+                    // window.location.reload();
+                }
+            );
+        },
+        toggleEditProduct: function (e) {
+            console.log('toggleEditProduct', e)
+            this.formProduct = e;
+            this.editor.html.set(e.content);
+            this.isLoading = false;
+            $(`#${this.$el.id}`).modal('toggle');
+        },
+        setEditorContent: function (content) {
+            if (!this.editor) return;
+            var parser = new DOMParser;
+            var dom = parser.parseFromString(
+                '<!doctype html><body>' + (content || ''),
+                'text/html');
+            var decodedString = dom.body.textContent;
+            this.editor.html.set(decodedString);
+        },
+        onChangeGroup: function (group){
+            console.log('onChangeGroup',group);
+            this.group = group;
+            this.topics = [];
+            const _this = this;
+            $.ajax({
+                url:"/get-topics/" + group.id,
+                method:"GET",
+                success:function(data)
+                {
+                    console.log(data);
+                    _this.topics = data;
+                }
+            });
+        },
+    },
+    mounted: function () {
+        this.editor = new FroalaEditor('#editorproduct', {
+            imageUploadParam: 'image',
+            key: 'SDB17hC8D6D6F4C3F3gB-22pmkobiH3rkzA3B2A1A1F4E1B1A10A1C6==',
+            attribution: false,
+            imageUploadURL: "/api/v3/file/auth/image/upload",
+            fontSize: false,
+            fontFamily: false,
+            imageDefaultWidth: 'unset'
+        }, this.setEditorContent(this.formProduct.content));
+
+        let authStr = localStorage.getItem('auth');
+        if (authStr) {
+            this.token = JSON.parse(authStr).token;
+        }
+        // var url = "/api/v3/save-product";
+        // if (this.token) {
+        //     url += "?token=" + this.token;
+        // }
+        // this.isLoading = true;
+        // axios.get(url)
+        //     .then(res => {
+        //             this.info = res.data;
+        //             this.isLoading = false;
+        //             console.log(this.info);
+        //             this.formProduct = {
+        //                 ...this.formProduct
+        //             };
+
+        //         }
+        //     );
+
+        setTimeout(function () {
+            $("#input-product-avatar").on("change", function () {
+                var fileName = $(this).val().split("\\").pop();
+                $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+            });
+
+
+        }, 100);
+
+    },
+    computed: {
+        tagsArray: function () {
+            return (this.formProduct.tags||'').split(',');
+        },
+        currentProvince: function () {
+            return this.info.locations.filter(i => i.id == this.formProduct.location_id)[0];
+        },
+
+    },
+    watch: {
+        formProduct: {
+            deep: true,
+            handler: function (val) {
+                console.log(val)
+
+            }
+        },
+    }
+
+});
+
+
+
+
+
+
+
+
+
+
+
+const topicButtons = document.querySelectorAll(".edit-topic");
+Array.prototype.forEach.call(topicButtons, (el, index) => new Vue({
+    el,
+    data: {},
+    methods: {
+        onChangeTopicGroup: function (group_id) {
+            modalCreateTopic.onChangeFormTopic('group_id',group_id);
+        }
+    },
+}));
+
+var modalCreateTopic = new Vue({
+    el: '#modal-create-topic',
+    data: {
+        token: false,
+        isLoading: false,
+        isUploadingImage: false,
+        isSaving: false,
+        percent: 0,
+        formTopic: {
+            avatar_url: '',
+            thumb_url: '',
+            title: '',
+            description: '',
+            group_id: '',
+            deadline: new Date(new Date().getTime() + 24 * 60 * 60 * 1000 * 7).toISOString().slice(0, 16),
+            is_required: 0,
+            weight:0,
+        },
+    },
+    info: {
+        types: [],
+    },
+    methods: {
+        changeAvatar: function (e) {
+            var imageTypes=["image/jpeg", "image/png"];
+            var input = document.createElement("input");
+            input.type = "file";
+            input.value = "";
+            input.accept = ".jpg,.png";
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if ($.inArray(file.type, imageTypes) >= 0) {
+                    if (file.size > 5 * 1000 * 1000) {
+                        alert("Kích thước ảnh không được quá 5 Mb");
+                        return 0
+                    }
+                    this.percent = 0;
+                    this.isUploadingImage = true;
+                    var url = "/api/v3/file/auth/image/upload";
+    
+                    let formdata = new FormData();
+                    formdata.append("image", file);
+                    let ajax = new XMLHttpRequest();
+                    ajax.addEventListener("load", this.uploadAvatarSuccess, false);
+                    ajax.upload.addEventListener("progress", this.progressHandler, false);
+                    ajax.open("POST", url);
+                    ajax.send(formdata);
+    
+    
+                    new Compressor(file, {
+                        quality: 1,
+                        maxWidth: 700,
+                        // The compression process is asynchronous,
+                        // which means you have to access the `result` in the `success` hook function.
+                        success: (result) => {
+                            const formData = new FormData();
+    
+                            // The third parameter is required for server
+                            formData.append('image', result, result.name);
+    
+                            console.log(url);
+                            // Send the compressed image file to server with XMLHttpRequest.
+                            axios.post(url, formData).then((response) => {
+                                console.log('Upload thumbnail success');
+                                console.log(response.data);
+                                var thumb_result = response.data
+                                console.log(thumb_result.link);
+                                this.formTopic.thumb_url = thumb_result.link;
+                            });
+    
+                        },
+                        error(err) {
+                            console.log(err.message);
+                        },
+                    });
+                }
+                else{
+                    if (file.size > 200 * 1080 * 1080) {
+                        alert("Video không được quá 200 Mb");
+                        return 0
+                    }
+                    this.percent = 0;
+                    this.isUploadingImage = true;
+                    var url = "https://colorme.vn/node-server/video/upload";
+                    if (this.token) {
+                        url += "?token=" + this.token;
+                    }
+                    let formData = new FormData();
+                    formData.append("video", file, file.name);
+                    formData.append("file_name", file.name);
+
+                    let ajax = new XMLHttpRequest();
+                    ajax.addEventListener("load", this.uploadAvatarSuccess, false);
+                    ajax.upload.addEventListener("progress", this.progressHandler, false);
+                    ajax.open("POST", url);
+                    ajax.send(formData);
+                }
+            }
+            input.click();
+
+        },
+        progressHandler(event) {
+            let percent = (event.loaded / event.total) * 100;
+            this.percent = Math.round(percent);
+        },
+        onChangeFormTopic: function (field, value) {
+            console.log('hello');
+            switch (field){
+                case 'topic':
+                    this.topic = value;
+                    break;
+                default:
+                    this.formTopic[field] = value;
+            }
+        },
+        onChangeSelectFormTopic: function (field, id) {
+            if (this.formTopic[field].indexOf(id) < 0) {
+                this.formTopic[field].push(id);
+            } else {
+                this.formTopic[field] = this.formTopic[field].filter(i => i != id);
+            }
+        },
+        uploadAvatarSuccess: function (e) {
+            this.isUploadingImage = false;
+            this.isLoading = false;
+
+            
+            if (JSON.parse(e.currentTarget.response).link){
+                toastr.success("Tải ảnh lên thành công");
+                this.formTopic.avatar_url = JSON.parse(e.currentTarget.response).link;
+            }
+            else{
+                toastr.success("Tải video lên thành công");
+                this.formTopic.avatar_url = JSON.parse(e.currentTarget.response).uri;
+                console.log('nice');
+            }
+            
+            
+        },
+        validateForm: function () {
+            let errors = [];
+            let {
+                avatar_url,
+                thumb_url,
+                title,
+                description,
+                tags,
+                group_id,
+                deadline,
+                is_required,
+                weight,
+            } = this.formTopic;
+            if (!(avatar_url && avatar_url.length > 0)) {
+                errors.push('Bạn chưa chọn ảnh đại diện');
+            }
+            if (!(title && title.length > 0)) {
+                errors.push('Bạn chưa nhập tiêu đề');
+            }
+            if (!deadline) {
+                errors.push('Bạn chưa chọn hạn chót');
+            }
+            errors.forEach(e => toastr.error(e));
+            return errors.length == 0;
+        },
+        submitTopic: function () {
+            
+            console.log(this.formTopic);
+            if (!this.validateForm()) return;
+            this.isLoading = true;
+            toastr.warning("Đang lưu...");
+            var url = '/api/v3/save-topic';
+            if (this.token) {
+                url += "?token=" + this.token;
+            }
+            $.post(
+                url,
+                {
+                    ...this.formTopic,
+                    avatar_name : this.formTopic.avatar_url,
+                    tags : "",
+                    avatar_is_video : 0,
+                },
+                function (data, status) {
+                    console.log(data, status);
+                    $('#modal-create-topic').modal('hide');
+                    toastr.success("Lưu thành công");
+                    this.isLoading = false;
+                    this.formTopic = {};
+                    // window.location.href = '/profile';
+                    window.location.reload();
+                }
+            );
+        },
+        toggleEditTopic: function (e) {
+            console.log('toggleEditTopic', e)
+            this.formTopic = e;
+            this.formTopic.deadline = new Date(e.deadline).toISOString().slice(0, 16),
+            this.isLoading = false;
+            $(`#${this.$el.id}`).modal('toggle');
+        },
+    },
+    mounted: function () {
+        let authStr = localStorage.getItem('auth');
+        if (authStr) {
+            this.token = JSON.parse(authStr).token;
+        }
+        
+        setTimeout(function () {
+            $("#input-topic-avatar").on("change", function () {
+                var fileName = $(this).val().split("\\").pop();
+                $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+            });
+        }, 100);
+
+    },
+    computed: {
+        // tagsArray: function () {
+        //     return (this.formProduct.tags||'').split(',');
+        // },
+        // currentProvince: function () {
+        //     return this.info.locations.filter(i => i.id == this.formProduct.location_id)[0];
+        // },
+
+    },
+    watch: {
+        formTopic: {
+            deep: true,
+            handler: function (val) {
+                console.log(val)
+
+            }
+        },
+    }
+
+});
