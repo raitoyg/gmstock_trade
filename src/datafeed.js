@@ -2,27 +2,27 @@ const configurationData = {
     supported_resolutions: ['1D', '1W', '1M'],
     exchanges: [
         {
-            value: 'Bitfinex',
-            name: 'Bitfinex',
-            desc: 'Bitfinex',
+            value: 'HOSE',
+            name: 'HOSE',
+            desc: 'Ho Chi Minh City Stock Exchange', //Bitfinex
         },
         {
-            // `exchange` argument for the `searchSymbols` method, if a user selects this exchange
-            value: 'Kraken',
-
-            // filter name
-            name: 'Kraken',
-
-            // full exchange name displayed in the filter popup
-            desc: 'Kraken bitcoin exchange',
+            value: 'HNX',
+            name: 'HNX',
+            desc: 'Hanoi Stock Exchange',
         },
+        {
+            value: 'UPCOM',
+            name: 'UPCOM',
+            desc: 'UPCOM',
+        }
     ],
     symbols_types: [
         {
-            name: 'crypto',
+            name: 'đồng',
 
             // `symbolType` argument for the `searchSymbols` method, if a user selects this symbol type
-            value: 'crypto',
+            value: 'đồng',
         },
         // ...
     ],
@@ -33,26 +33,28 @@ import json from "../data/HOSE_HNX_UPCOM_symbols.json" assert { type: "json" };
 
 // ...
 async function getAllSymbols() {
-    const data = await makeApiRequest('data/v3/all/exchanges');
+    // const data = await makeApiRequest('data/v3/all/exchanges');
+    const data = json.symbol_data;
     let allSymbols = [];
 
     for (const exchange of configurationData.exchanges) {
-        const pairs = data.Data[exchange.value].pairs;
-
-        for (const leftPairPart of Object.keys(pairs)) {
-            const symbols = pairs[leftPairPart].map(rightPairPart => {
-                const symbol = generateSymbol(exchange.value, leftPairPart, rightPairPart);
-                return {
-                    symbol: symbol.short,
-                    full_name: symbol.full,
-                    description: symbol.short,
-                    exchange: exchange.value,
-                    type: 'crypto',
-                };
-            });
-            allSymbols = [...allSymbols, ...symbols];
+        var filteredData = data.filter(function (filter) {
+            return filter.exchange == exchange.value
+        });
+        console.log(filteredData)
+        for (const data of filteredData) {
+            console.log(data);
+            const symbol = {
+                symbol: data.symbol,
+                full_name: data.symbol,
+                description: data.name,
+                exchange: exchange.value,
+                type: 'đồng',
+            }
+            allSymbols.push(symbol)
         }
     }
+    console.log(allSymbols);
     return allSymbols;
 }
 
