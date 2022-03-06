@@ -19,10 +19,10 @@ const configurationData = {
     ],
     symbols_types: [
         {
-            name: 'đồng',
+            name: 'stock',
 
             // `symbolType` argument for the `searchSymbols` method, if a user selects this symbol type
-            value: 'đồng',
+            value: 'stock',
         },
         // ...
     ],
@@ -41,20 +41,17 @@ async function getAllSymbols() {
         var filteredData = data.filter(function (filter) {
             return filter.exchange == exchange.value
         });
-        console.log(filteredData)
         for (const data of filteredData) {
-            console.log(data);
             const symbol = {
                 symbol: data.symbol,
                 full_name: data.symbol,
                 description: data.name,
                 exchange: exchange.value,
-                type: 'đồng',
+                type: 'stock',
             }
             allSymbols.push(symbol)
         }
     }
-    console.log(allSymbols);
     return allSymbols;
 }
 
@@ -116,35 +113,37 @@ export default {
     },
     getBars: async (symbolInfo, resolution, periodParams, onHistoryCallback, onErrorCallback) => {
         const { from, to, firstDataRequest } = periodParams;
+        var fromDate = new Date(from*1000).toLocaleDateString('en-US')
+        var toDate = new Date(to*1000).toLocaleDateString('en-US')
         console.log('[getBars]: Method call', symbolInfo, resolution, from, to);
-        const parsedSymbol = parseFullSymbol(symbolInfo.full_name);
         const urlParameters = {
-            e: parsedSymbol.exchange,
-            fsym: parsedSymbol.fromSymbol,
-            tsym: parsedSymbol.toSymbol,
-            toTs: to,
-            limit: 2000,
+            code: symbolInfo.name,
+            FromDate:fromDate,
+            ToDate:toDate,
+            pagesize: 1000,
         };
         const query = Object.keys(urlParameters)
             .map(name => `${name}=${encodeURIComponent(urlParameters[name])}`)
             .join('&');
+        //Basically create this e=Bitfinex&fsym=BTC&tsym=USD&toTs=1642291200&limit=2000
         try {
-            const data = await makeApiRequest(`data/histoday?${query}`);
-            if (data.Response && data.Response === 'Error' || data.Data.length === 0) {
+            const data = await makeApiRequest(`stocktradinginfo?${query}&token=3D95695BE7AE48FAAB182C812618CDC3`);
+            if (data.Response && data.Response === 'Error' || data.length === 0) {
                 // "noData" should be set if there is no data in the requested period.
                 onHistoryCallback([], { noData: true });
                 return;
             }
             let bars = [];
-            data.Data.forEach(bar => {
-                if (bar.time >= from && bar.time < to) {
-                    bars = [...bars, {
-                        time: bar.time * 1000,
-                        low: bar.low,
-                        high: bar.high,
-                        open: bar.open,
-                        close: bar.close,
-                    }];
+            data.forEach(bar => {
+                if ((Date.parse(bar.TradingDate)/1000) >= from && (Date.parse(bar.TradingDate)/1000) < to) {
+                    const barr = {
+                        time: Date.parse(bar.TradingDate),
+                        low: bar.LowestPrice,
+                        high: bar.HighestPrice,
+                        open: bar.OpenPrice,
+                        close: bar.ClosePrice,
+                    }
+                    bars.push(barr)
                 }
             });
             console.log(`[getBars]: returned ${bars.length} bar(s)`);

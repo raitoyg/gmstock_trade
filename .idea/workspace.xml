@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="ad1290a7-c0a7-4add-a403-baa96b727d84" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/jsLibraryMappings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/HOSE_HNX_UPCOM_symbols.json" beforeDir="false" afterPath="$PROJECT_DIR$/data/HOSE_HNX_UPCOM_symbols.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gmstock_lib/2018-style.css" beforeDir="false" afterPath="$PROJECT_DIR$/gmstock_lib/2018-style.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gmstock_lib/vue.js.download" beforeDir="false" afterPath="$PROJECT_DIR$/gmstock_lib/vue.js.download" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
+    <list default="true" id="ad1290a7-c0a7-4add-a403-baa96b727d84" name="Changes" comment="pushing tradingview cloned stuffs">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/datafeed.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/datafeed.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/helpers.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/helpers.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -17,6 +13,9 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
   </component>
   <component name="ProjectId" id="23heH7CahDZKnGkgX6nchtGMHkb" />
   <component name="ProjectViewState">
@@ -40,10 +39,43 @@
       <option name="presentableId" value="Default" />
       <updated>1642190660169</updated>
       <workItem from="1642190662127" duration="59000" />
+      <workItem from="1642190751479" duration="1193000" />
+      <workItem from="1642222103834" duration="40000" />
+      <workItem from="1642234309793" duration="2660000" />
+      <workItem from="1642240692987" duration="11688000" />
+      <workItem from="1643453585451" duration="8739000" />
+      <workItem from="1644497685792" duration="471000" />
+      <workItem from="1644892562531" duration="1716000" />
+      <workItem from="1645020730803" duration="4766000" />
+      <workItem from="1646457893403" duration="376000" />
+      <workItem from="1646555919832" duration="1547000" />
     </task>
+    <task id="LOCAL-00001" summary="pushing tradingview cloned stuffs">
+      <created>1642191334499</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1642191334499</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="pushing tradingview cloned stuffs" />
+    <option name="LAST_COMMIT_MESSAGE" value="pushing tradingview cloned stuffs" />
   </component>
 </project>

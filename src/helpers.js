@@ -1,20 +1,11 @@
-// Make requests to CryptoCompare API
+
 export async function makeApiRequest(path) {
     try {
-        const response = await fetch(`https://min-api.cryptocompare.com/${path}`);
+        const response = await fetch(`https://api2.vietstock.vn/GM/${path}`); //TODO remove CORS
         return response.json();
     } catch (error) {
-        throw new Error(`CryptoCompare request error: ${error.status}`);
+        throw new Error(`Vietstock request error: ${error.status}`);
     }
-}
-
-export function parseFullSymbol(fullSymbol) {
-    const match = fullSymbol.match(/^(\w+):(\w+)\/(\w+)$/);
-    if (!match) {
-        return null;
-    }
-
-    return {exchange: match[1], fromSymbol: match[2], toSymbol: match[3]};
 }
 
 // Generate a symbol ID from a pair of the coins
